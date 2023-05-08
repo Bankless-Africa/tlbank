@@ -33,6 +33,8 @@ import {
   AccordionIcon,
   Hide,
 } from '@chakra-ui/react'
+import { useContractRead, useContractWrite } from 'wagmi'
+import { BigNumber } from 'ethers'
 
 function TlBank() {
   const [value, setValue] = useState(40000)
@@ -46,7 +48,6 @@ function TlBank() {
   const [totalLock, setTotalLock] = useState('')
   const [walletBalance, setWalletBalance] = useState('')
 
-
   const handleButton = (bankVal, btn, duration) => {
     setValue(bankVal)
     setActive(btn)
@@ -58,12 +59,140 @@ function TlBank() {
     setUnlockDate(endDate)
   }
 
-
   useEffect(() => {
     const date = getCurrentDate()
     const endDateRaw = getUnlockDateRaw(date, 6)
     setLockDate(date)
   }, [])
+
+  // connected wallet balance
+  const contractReadBalance = useContractRead({
+    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    abi: [
+      {
+        name: 'balanceOf',
+        inputs: [{ internalType: 'address', name: 'account', type: 'address' }],
+        outputs: [{ internalType: 'int256', name: '', type: 'int256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ],
+    functionName: 'balanceOf',
+    watch: true,
+    args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930'],
+    chainId: 5,
+  })
+  console.log(contractReadBalance.data)
+
+  // locked balance
+  const contractReadLockBalance = useContractRead({
+    address: '0xD106E28bDcDF9052EC0845754A5a27303FC8095C',
+    abi: [
+      {
+        name: 'lockedBalances',
+        inputs: [{ internalType: 'address', name: 'holder', type: 'address' }],
+        outputs: [
+          { internalType: 'int256', name: 'lockedBalance', type: 'int256' },
+        ],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ],
+    functionName: 'lockedBalances',
+    watch: true,
+    args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930'],
+    chainId: 5,
+  })
+  console.log(contractReadLockBalance.data)
+
+  // approved amount query
+  const contractReadAllowance = useContractRead({
+    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    abi: [
+      {
+        name: 'allowance',
+        inputs: [
+          { internalType: 'address', name: 'owner', type: 'address' },
+          { internalType: 'address', name: 'spender', type: 'address' },
+        ],
+        outputs: [{ internalType: 'int256', name: '', type: 'int256' }],
+        stateMutability: 'view',
+        type: 'function',
+      },
+    ],
+    functionName: 'allowance',
+    watch: true,
+    args: [
+      '0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930',
+      '0xD106E28bDcDF9052EC0845754A5a27303FC8095C',
+    ],
+    chainId: 5,
+  })
+  console.log(contractReadAllowance.data)
+
+  const contractWriteAllowance = useContractWrite({
+    mode: 'recklesslyUnprepared',
+    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    abi: [
+      {
+        name: 'approve',
+        inputs: [
+          { internalType: 'address', name: 'spender', type: 'address' },
+          { internalType: 'uint256', name: 'amount', type: 'uint256' },
+        ],
+        outputs: [{ internalType: 'bool', name: '', type: 'bool' }],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ],
+    functionName: 'approve',
+    args: ['0xD106E28bDcDF9052EC0845754A5a27303FC8095C', BigNumber.from(1)],
+    chainId: 5,
+  })
+
+  const contractWriteLock = useContractWrite({
+    mode: 'recklesslyUnprepared',
+    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    abi: [
+      {
+        name: 'createNFT',
+        inputs: [
+          { internalType: 'address', name: 'recipient', type: 'address' },
+          { internalType: 'uint256', name: 'amount', type: 'uint256' },
+          { internalType: 'uint256', name: 'unlockDate', type: 'uint256' },
+        ],
+        outputs: [{ internalType: 'uint256', name: '', type: 'uint256' }],
+        stateMutability: 'nonpayable',
+        type: 'function',
+      },
+    ],
+    functionName: 'createNFT',
+    args: [
+      '0xD106E28bDcDF9052EC0845754A5a27303FC8095C',
+      BigNumber.from(1),
+      BigNumber.from(1),
+    ],
+    chainId: 5,
+  })
+
+  const handleLock = async () => {
+    if (contractReadAllowance.data) {
+      try {
+        await contractWriteAllowance.writeAsync?.()
+        if (contractWriteAllowance.isSuccess) {
+          await contractWriteLock.writeAsync?.()
+        }
+      } catch (err) {
+        console.log(err)
+      }
+    } else {
+      try {
+        await contractWriteLock.writeAsync?.()
+      } catch (err) {
+        console.log(err)
+      }
+    }
+  }
 
   return (
     <Container maxW={'6xl'} mx='auto' p={0}>
@@ -75,20 +204,22 @@ function TlBank() {
             border='1px'
             borderColor='red.500'
             color={'white'}
-            bgColor={'black'}>
+            bgColor={'black'}
+          >
             <Icon as={FaEthereum} />
           </Button>
           {/* {!account ? ( */}
-            <Button
-              border='1px'
-              borderColor='red.500'
-              color={'white'}
+          <Button
+            border='1px'
+            borderColor='red.500'
+            color={'white'}
             //   onClick={connectWallet}
-              bgColor={'black'}>
-              {/* {account === '' ? 'Connect a wallet' : account} */}
-              Connect a Wallet
-            </Button>
-            {/* ) : (
+            bgColor={'black'}
+          >
+            {/* {account === '' ? 'Connect a wallet' : account} */}
+            Connect a Wallet
+          </Button>
+          {/* ) : (
             <Button
               border='1px'
               borderColor='red.200'
@@ -123,13 +254,15 @@ function TlBank() {
           <VStack>
             <Heading
               fontSize={{ base: '10px', md: '14px' }}
-              color='rgba(255, 255, 255, 0.7)'>
+              color='rgba(255, 255, 255, 0.7)'
+            >
               Total BANKs Locked
             </Heading>
             <Heading
               color='white'
               as='b'
-              fontSize={{ base: '16px', md: '22px' }}>
+              fontSize={{ base: '16px', md: '22px' }}
+            >
               {/* {totalLock}K BANK */}
               300K BANK
             </Heading>
@@ -138,13 +271,15 @@ function TlBank() {
           <VStack>
             <Heading
               fontSize={{ base: '10px', md: '14px' }}
-              color='rgba(255, 255, 255, 0.7)'>
+              color='rgba(255, 255, 255, 0.7)'
+            >
               Total BANKs Holders
             </Heading>
             <Heading
               color='white'
               as='b'
-              fontSize={{ base: '16px', md: '22px' }}>
+              fontSize={{ base: '16px', md: '22px' }}
+            >
               {/* 300 Holders */}
               {totalHolders ? `${totalHolders} ` : '0 '}Holders
             </Heading>
@@ -157,14 +292,16 @@ function TlBank() {
         bg='rgba(1, 1, 1, 100.0)'
         columns={{ base: 1, lg: 2 }}
         gap={10}
-        mt={10}>
+        mt={10}
+      >
         <Box
           maxW={'100%'}
           bgColor={'#111111'}
           p={5}
           border={'1px'}
           borderRadius={'5px'}
-          borderColor={'gray.700'}>
+          borderColor={'gray.700'}
+        >
           <Flex>
             <HStack>
               <IoWalletOutline
@@ -207,12 +344,14 @@ function TlBank() {
                 as='legend'
                 color='rgba(255, 255, 255, 0.7)'
                 fontSize={'14px'}
-                my='2'>
+                my='2'
+              >
                 Vesting term <Icon as={BiInfoCircle} />
               </FormLabel>
               <Stack
                 spacing='24px'
-                direction={{ base: 'column', md: 'column', xl: 'row' }}>
+                direction={{ base: 'column', md: 'column', xl: 'row' }}
+              >
                 <Button
                   onClick={() => handleButton(40000, '40k', 6)}
                   colorScheme='gray'
@@ -223,7 +362,8 @@ function TlBank() {
                   fontSize={'14px'}
                   fontWeight={700}
                   w='full'
-                  _hover={{ bg: 'none', svg: { fill: 'white' } }}>
+                  _hover={{ bg: 'none', svg: { fill: 'white' } }}
+                >
                   {active === '40k' ? (
                     <IoMdRadioButtonOn />
                   ) : (
@@ -241,7 +381,8 @@ function TlBank() {
                   fontSize={'14px'}
                   fontWeight={700}
                   w='full'
-                  _hover={{ bg: 'none', svg: { fill: 'white' } }}>
+                  _hover={{ bg: 'none', svg: { fill: 'white' } }}
+                >
                   {active === '80k' ? (
                     <IoMdRadioButtonOn />
                   ) : (
@@ -263,7 +404,8 @@ function TlBank() {
                     as='span'
                     flex='1'
                     textAlign='left'
-                    color='rgba(255, 255, 255, 0.7)'>
+                    color='rgba(255, 255, 255, 0.7)'
+                  >
                     Summary
                   </Box>
                   <AccordionIcon />
@@ -295,7 +437,8 @@ function TlBank() {
             // onClick={() => onConfirm()}
             bg='red.500'
             _hover={{ bg: 'red.500' }}
-            w={'100%'}>
+            w={'100%'}
+          >
             Confirm
           </Button>
         </Box>
@@ -304,13 +447,15 @@ function TlBank() {
             display='flex'
             justifyContent='center'
             bg='rgba(1, 1, 1, 100.0)'
-            alignItems='center'>
+            alignItems='center'
+          >
             <Box
               display='flex'
               justifyContent='center'
               alignItems='center'
               pl={70}
-              bg='radial-gradient(at center, rgba(255, 27, 1, 0.3),rgba(255, 27, 1, 0.2), rgba(1, 1, 1, 100.0), rgba(1, 1, 1, 100.0));'>
+              bg='radial-gradient(at center, rgba(255, 27, 1, 0.3),rgba(255, 27, 1, 0.2), rgba(1, 1, 1, 100.0), rgba(1, 1, 1, 100.0));'
+            >
               <Image
                 src='/images/bank-token.png'
                 alt='bankToken'

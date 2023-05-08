@@ -5,6 +5,20 @@ import theme from 'config/theme'
 import 'tailwindcss/tailwind.css'
 import '../styles/index.css'
 import PageContainer from 'components/_common/page-container'
+import { configureChains, createClient, WagmiConfig } from 'wagmi'
+import { goerli, sepolia, mainnet, polygon } from 'wagmi/chains'
+import { publicProvider } from 'wagmi/providers/public'
+
+const chains = [goerli, sepolia, mainnet, polygon]
+
+const { provider } = configureChains(chains, [publicProvider()])
+
+const wagmiClient = createClient({
+  autoConnect: true,
+  provider,
+})
+
+//const ethereumClient = new EthereumClient(wagmiClient, chains);
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -22,12 +36,13 @@ function MyApp({ Component, pageProps }: AppProps) {
           gtag('config', 'G-PK78Y6EQDB');
         `}
       </Script>
-
-      <ChakraProvider theme={theme}>
-        <PageContainer>
-          <Component {...pageProps} />
-        </PageContainer>
-      </ChakraProvider>
+      <WagmiConfig client={wagmiClient}>
+        <ChakraProvider theme={theme}>
+          <PageContainer>
+            <Component {...pageProps} />
+          </PageContainer>
+        </ChakraProvider>
+      </WagmiConfig>
     </>
   )
 }
