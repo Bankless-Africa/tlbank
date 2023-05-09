@@ -36,6 +36,7 @@ import {
 import { useContractRead, useContractWrite } from 'wagmi'
 import { BigNumber } from 'ethers'
 import ConnectCustom from '../components/connectCustom/ConnectCustom'
+import { useAccount } from 'wagmi'
 
 function TlBank() {
   const [value, setValue] = useState(40000)
@@ -52,6 +53,8 @@ function TlBank() {
   const bankToken: `0x${string}` = '0xA07f49794E93f203bBE7Ad0F200B052275c8AeEF'
   const TLBankToken: `0x${string}` =
     '0x93b99F15561Df5a3FD95b6623D5142e200271bC2'
+
+  const { address } = useAccount()
 
   const handleButton = (bankVal, btn, duration) => {
     setValue(bankVal)
@@ -84,7 +87,7 @@ function TlBank() {
     ],
     functionName: 'balanceOf',
     watch: true,
-    args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930'],
+    args: [address!],
     chainId: 84531,
   })
   console.log(contractReadBalance.data)
@@ -105,7 +108,7 @@ function TlBank() {
     ],
     functionName: 'lockedBalances',
     watch: true,
-    args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930'],
+    args: [address!],
     chainId: 84531,
   })
   console.log(contractReadLockBalance.data)
@@ -127,7 +130,7 @@ function TlBank() {
     ],
     functionName: 'allowance',
     watch: true,
-    args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930', TLBankToken],
+    args: [address!, TLBankToken],
     chainId: 84531,
   })
   console.log(contractReadAllowance.data)
@@ -169,11 +172,7 @@ function TlBank() {
       },
     ],
     functionName: 'createNFT',
-    args: [
-      '0xD106E28bDcDF9052EC0845754A5a27303FC8095C',
-      BigNumber.from(1),
-      BigNumber.from(1),
-    ],
+    args: [address!, BigNumber.from(1), BigNumber.from(1)],
     chainId: 84531,
   })
 
