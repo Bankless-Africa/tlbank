@@ -65,6 +65,7 @@ function TlBank() {
     const endDateRaw = getUnlockDateRaw(startDate, duration)
     setUnlockDateRaw(endDateRaw)
     setUnlockDate(endDate)
+    handleLock()
   }
 
   useEffect(() => {
@@ -151,7 +152,7 @@ function TlBank() {
       },
     ],
     functionName: 'approve',
-    args: [TLBankToken, BigNumber.from(1)],
+    args: [TLBankToken, BigNumber.from(value)],
     chainId: 84531,
   })
 
