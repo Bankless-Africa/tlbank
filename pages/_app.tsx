@@ -6,19 +6,28 @@ import 'tailwindcss/tailwind.css'
 import '../styles/index.css'
 import PageContainer from 'components/_common/page-container'
 import { configureChains, createClient, WagmiConfig } from 'wagmi'
-import { goerli, sepolia, mainnet, polygon } from 'wagmi/chains'
-import { publicProvider } from 'wagmi/providers/public'
+import { baseGoerli, goerli, sepolia, mainnet, polygon } from 'wagmi/chains'
+import { EthereumClient, w3mConnectors, w3mProvider } from '@web3modal/ethereum'
+import { Web3Modal } from '@web3modal/react'
 
-const chains = [goerli, sepolia, mainnet, polygon]
+const projectId = process.env.NEXT_PUBLIC_W3M_PROJECT_ID
 
-const { provider } = configureChains(chains, [publicProvider()])
+const chains = [baseGoerli, goerli, sepolia, mainnet, polygon]
+
+// Wagmi client
+const { provider } = configureChains(chains, [w3mProvider({ projectId })])
 
 const wagmiClient = createClient({
   autoConnect: true,
+  connectors: w3mConnectors({
+    version: 1,
+    chains,
+    projectId,
+  }),
   provider,
 })
 
-//const ethereumClient = new EthereumClient(wagmiClient, chains);
+const ethereumClient = new EthereumClient(wagmiClient, chains)
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
@@ -43,6 +52,7 @@ function MyApp({ Component, pageProps }: AppProps) {
           </PageContainer>
         </ChakraProvider>
       </WagmiConfig>
+      <Web3Modal projectId={projectId} ethereumClient={ethereumClient} />
     </>
   )
 }

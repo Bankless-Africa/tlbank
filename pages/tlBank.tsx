@@ -35,6 +35,7 @@ import {
 } from '@chakra-ui/react'
 import { useContractRead, useContractWrite } from 'wagmi'
 import { BigNumber } from 'ethers'
+import ConnectCustom from '../components/connectCustom/ConnectCustom'
 
 function TlBank() {
   const [value, setValue] = useState(40000)
@@ -47,6 +48,10 @@ function TlBank() {
   const [totalHolders, setTotalHolders] = useState('')
   const [totalLock, setTotalLock] = useState('')
   const [walletBalance, setWalletBalance] = useState('')
+
+  const bankToken: `0x${string}` = '0xA07f49794E93f203bBE7Ad0F200B052275c8AeEF'
+  const TLBankToken: `0x${string}` =
+    '0x93b99F15561Df5a3FD95b6623D5142e200271bC2'
 
   const handleButton = (bankVal, btn, duration) => {
     setValue(bankVal)
@@ -67,7 +72,7 @@ function TlBank() {
 
   // connected wallet balance
   const contractReadBalance = useContractRead({
-    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    address: bankToken,
     abi: [
       {
         name: 'balanceOf',
@@ -80,13 +85,13 @@ function TlBank() {
     functionName: 'balanceOf',
     watch: true,
     args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930'],
-    chainId: 5,
+    chainId: 84531,
   })
   console.log(contractReadBalance.data)
 
   // locked balance
   const contractReadLockBalance = useContractRead({
-    address: '0xD106E28bDcDF9052EC0845754A5a27303FC8095C',
+    address: TLBankToken,
     abi: [
       {
         name: 'lockedBalances',
@@ -101,13 +106,13 @@ function TlBank() {
     functionName: 'lockedBalances',
     watch: true,
     args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930'],
-    chainId: 5,
+    chainId: 84531,
   })
   console.log(contractReadLockBalance.data)
 
   // approved amount query
   const contractReadAllowance = useContractRead({
-    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    address: bankToken,
     abi: [
       {
         name: 'allowance',
@@ -122,17 +127,14 @@ function TlBank() {
     ],
     functionName: 'allowance',
     watch: true,
-    args: [
-      '0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930',
-      '0xD106E28bDcDF9052EC0845754A5a27303FC8095C',
-    ],
-    chainId: 5,
+    args: ['0x7EE7b26C25Ea618E6223cCc3c79D5e7259f1A930', TLBankToken],
+    chainId: 84531,
   })
   console.log(contractReadAllowance.data)
 
   const contractWriteAllowance = useContractWrite({
     mode: 'recklesslyUnprepared',
-    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    address: bankToken,
     abi: [
       {
         name: 'approve',
@@ -146,13 +148,13 @@ function TlBank() {
       },
     ],
     functionName: 'approve',
-    args: ['0xD106E28bDcDF9052EC0845754A5a27303FC8095C', BigNumber.from(1)],
-    chainId: 5,
+    args: [TLBankToken, BigNumber.from(1)],
+    chainId: 84531,
   })
 
   const contractWriteLock = useContractWrite({
     mode: 'recklesslyUnprepared',
-    address: '0x077154D2931eEC781f8F1a1D0a23Ce6Ef896a2ac',
+    address: TLBankToken,
     abi: [
       {
         name: 'createNFT',
@@ -172,7 +174,7 @@ function TlBank() {
       BigNumber.from(1),
       BigNumber.from(1),
     ],
-    chainId: 5,
+    chainId: 84531,
   })
 
   const handleLock = async () => {
@@ -209,16 +211,17 @@ function TlBank() {
             <Icon as={FaEthereum} />
           </Button>
           {/* {!account ? ( */}
+          {/* 
           <Button
             border='1px'
             borderColor='red.500'
             color={'white'}
-            //   onClick={connectWallet}
             bgColor={'black'}
           >
             {/* {account === '' ? 'Connect a wallet' : account} */}
-            Connect a Wallet
-          </Button>
+          {/* Connect a Wallet*/}
+          {/*   </Button>*/}
+          <ConnectCustom />
           {/* ) : (
             <Button
               border='1px'

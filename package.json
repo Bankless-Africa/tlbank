@@ -18,6 +18,8 @@
     "@emotion/styled": "^11.6.0",
     "@fontsource/clear-sans": "^4.5.3",
     "@hookform/resolvers": "^2.8.8",
+    "@web3modal/ethereum": "^2.3.7",
+    "@web3modal/react": "^2.3.7",
     "autoprefixer": "^10.4.14",
     "cypress": "^10.3.1",
     "cypress-image-snapshot": "^4.0.1",
