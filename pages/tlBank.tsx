@@ -39,6 +39,14 @@ import { BigNumber, ethers } from 'ethers'
 import ConnectCustom from '../components/connectCustom/ConnectCustom'
 import { useAccount } from 'wagmi'
 
+const settings = {
+  apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY,
+  network: Network.ETH_GOERLI,
+}
+
+// init with key and chain info
+const alchemy = new Alchemy(settings)
+
 function TlBank() {
   const [value, setValue] = useState('40000000000000000000000')
   const [active, setActive] = useState('40k')
@@ -47,7 +55,7 @@ function TlBank() {
   const [unlockDate, setUnlockDate] = useState<any | null>(null)
   const [unlockDateRaw, setUnlockDateRaw] = useState<any | null>(null)
   const [endDate, setEndDate] = useState('')
-  const [totalHolders, setTotalHolders] = useState('')
+  const [totalHolders, setTotalHolders] = useState(0)
   const [totalLock, setTotalLock] = useState('')
   const [walletBalance, setWalletBalance] = useState('')
 
@@ -55,7 +63,7 @@ function TlBank() {
   const TLBankToken: `0x${string}` =
     '0x93b99F15561Df5a3FD95b6623D5142e200271bC2'
 
-  const { address } = useAccount()
+  const { address, isConnected } = useAccount()
 
   const handleButton = (bankVal, btn, duration) => {
     setValue(bankVal)
@@ -71,12 +79,25 @@ function TlBank() {
 
   useEffect(() => {
     //setTotalHolders()
-    setWalletBalance(ethers.utils.formatEther(contractReadBalance.data!))
-    setTotalLock(ethers.utils.formatEther(contractReadLockBalance.data!))
+    if (isConnected) {
+      setWalletBalance(ethers.utils.formatEther(contractReadBalance.data!))
+      setTotalLock(ethers.utils.formatEther(contractReadLockBalance.data!))
+    } else if (!isConnected) {
+      setWalletBalance('0')
+      setTotalLock('0')
+    }
     const date = getCurrentDate()
     const endDateRaw = getUnlockDateRaw(date, 6)
     setLockDate(date)
-  }, [])
+    async function doIt() {
+      const { owners } = await alchemy.nft.getOwnersForContract(
+        '0xD106E28bDcDF9052EC0845754A5a27303FC8095C'
+      )
+      console.log(owners)
+      setTotalHolders(owners.length)
+    }
+    doIt()
+  }, [isConnected, alchemy])
 
   // connected wallet balance
   const contractReadBalance = useContractRead({
@@ -200,14 +221,6 @@ function TlBank() {
       }
     }
   }
-
-  const settings = {
-    apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY, //"wQhhyq4-jQcPzFRui3PljR6pzRwd5N_n",
-    network: Network.ETH_SEPOLIA,
-  }
-
-  // init with key and chain info
-  const alchemy = new Alchemy(settings)
 
   return (
     <Container maxW={'6xl'} mx='auto' p={0}>
