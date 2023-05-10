@@ -1,3 +1,4 @@
+import { Network, Alchemy } from 'alchemy-sdk'
 import React, { useState, useEffect, useContext } from 'react'
 import Logo from '../tlUtils/tlBankLogo'
 import Image from 'next/image'
@@ -69,6 +70,9 @@ function TlBank() {
   }
 
   useEffect(() => {
+    //setTotalHolders()
+    setWalletBalance(ethers.utils.formatEther(contractReadBalance.data!))
+    setTotalLock(ethers.utils.formatEther(contractReadLockBalance.data!))
     const date = getCurrentDate()
     const endDateRaw = getUnlockDateRaw(date, 6)
     setLockDate(date)
@@ -197,6 +201,14 @@ function TlBank() {
     }
   }
 
+  const settings = {
+    apiKey: process.env.NEXT_PUBLIC_ALCHEMY_API_KEY, //"wQhhyq4-jQcPzFRui3PljR6pzRwd5N_n",
+    network: Network.ETH_SEPOLIA,
+  }
+
+  // init with key and chain info
+  const alchemy = new Alchemy(settings)
+
   return (
     <Container maxW={'6xl'} mx='auto' p={0}>
       <Flex as='nav' py={'10px'}>
@@ -267,11 +279,8 @@ function TlBank() {
               as='b'
               fontSize={{ base: '16px', md: '22px' }}
             >
-              {/* {totalLock}K BANK  */}
-              {ethers.utils.formatEther(contractReadLockBalance.data!)
-                ? `${ethers.utils.formatEther(contractReadLockBalance.data!)} `
-                : '0'}{' '}
-              BANK
+              {/* {totalLock} BANK */}
+              {totalLock ? `${totalLock} ` : '0'} BANK
             </Heading>
           </VStack>
           <Divider orientation='vertical' />
@@ -322,9 +331,7 @@ function TlBank() {
             </HStack>
             <Spacer />
             <Text fontSize={'14px'} fontWeight='600'>
-              {ethers.utils.formatEther(contractReadBalance.data!)
-                ? `${ethers.utils.formatEther(contractReadBalance.data!)} `
-                : '0.0 '}
+              {walletBalance ? `${walletBalance} ` : '0.0 '}
               BANK
             </Text>
           </Flex>
