@@ -34,12 +34,12 @@ import {
   Hide,
 } from '@chakra-ui/react'
 import { useContractRead, useContractWrite } from 'wagmi'
-import { BigNumber } from 'ethers'
+import { BigNumber, ethers } from 'ethers'
 import ConnectCustom from '../components/connectCustom/ConnectCustom'
 import { useAccount } from 'wagmi'
 
 function TlBank() {
-  const [value, setValue] = useState(40000)
+  const [value, setValue] = useState('40000000000000000000000')
   const [active, setActive] = useState('40k')
   const [duration, setDuration] = useState('')
   const [lockDate, setLockDate] = useState('')
@@ -65,7 +65,7 @@ function TlBank() {
     const endDateRaw = getUnlockDateRaw(startDate, duration)
     setUnlockDateRaw(endDateRaw)
     setUnlockDate(endDate)
-    handleLock()
+    handleAllowance()
   }
 
   useEffect(() => {
@@ -173,21 +173,22 @@ function TlBank() {
       },
     ],
     functionName: 'createNFT',
-    args: [address!, BigNumber.from(1), BigNumber.from(1)],
+    args: [address!, BigNumber.from(value), BigNumber.from(1688085000)],
     chainId: 84531,
   })
 
-  const handleLock = async () => {
+  const handleAllowance = async () => {
     if (contractReadAllowance.data) {
       try {
         await contractWriteAllowance.writeAsync?.()
-        if (contractWriteAllowance.isSuccess) {
-          await contractWriteLock.writeAsync?.()
-        }
       } catch (err) {
         console.log(err)
       }
-    } else {
+    }
+  }
+
+  const handleLock = async () => {
+    if (contractReadAllowance.data) {
       try {
         await contractWriteLock.writeAsync?.()
       } catch (err) {
@@ -266,8 +267,11 @@ function TlBank() {
               as='b'
               fontSize={{ base: '16px', md: '22px' }}
             >
-              {/* {totalLock}K BANK */}
-              300K BANK
+              {/* {totalLock}K BANK  */}
+              {ethers.utils.formatEther(contractReadLockBalance.data!)
+                ? `${ethers.utils.formatEther(contractReadLockBalance.data!)} `
+                : '0'}{' '}
+              BANK
             </Heading>
           </VStack>
           <Divider orientation='vertical' />
@@ -318,7 +322,10 @@ function TlBank() {
             </HStack>
             <Spacer />
             <Text fontSize={'14px'} fontWeight='600'>
-              {walletBalance ? `${walletBalance} ` : '0.0 '}BANK
+              {ethers.utils.formatEther(contractReadBalance.data!)
+                ? `${ethers.utils.formatEther(contractReadBalance.data!)} `
+                : '0.0 '}
+              BANK
             </Text>
           </Flex>
           <Divider m={2} />
@@ -329,7 +336,7 @@ function TlBank() {
             </FormLabel>
             <Input
               color='white'
-              value={value}
+              value={ethers.utils.formatEther(value)}
               readOnly
               borderRadius={0}
               bgColor={'#232323'}
@@ -356,7 +363,9 @@ function TlBank() {
                 direction={{ base: 'column', md: 'column', xl: 'row' }}
               >
                 <Button
-                  onClick={() => handleButton(40000, '40k', 6)}
+                  onClick={() =>
+                    handleButton('40000000000000000000000', '40k', 6)
+                  }
                   colorScheme='gray'
                   variant='outline'
                   color='white'
@@ -375,7 +384,9 @@ function TlBank() {
                   6 Months @ 40K BANK
                 </Button>
                 <Button
-                  onClick={() => handleButton(80000, '80k', 12)}
+                  onClick={() =>
+                    handleButton('80000000000000000000000', '80k', 12)
+                  }
                   colorScheme='gray'
                   variant='outline'
                   color='white'
@@ -437,7 +448,7 @@ function TlBank() {
           </Accordion>
           <Button
             borderRadius={0}
-            // onClick={() => onConfirm()}
+            onClick={handleLock}
             bg='red.500'
             _hover={{ bg: 'red.500' }}
             w={'100%'}
